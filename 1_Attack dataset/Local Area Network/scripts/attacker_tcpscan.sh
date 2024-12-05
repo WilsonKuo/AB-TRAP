@@ -13,7 +13,7 @@
 #
 
 # Remember to disable host machine firewall (in Ubuntu 'ufw disable')
-# Current kalilinux/rolling version 2020.1.2 do not have zmap and unicornscan as baseline, so it is required to install
+# Current kalilinux/rolling version 2024.3.1 do not have zmap and unicornscan as baseline, so it is required to install
 apt-get update
 apt-get install zmap unicornscan -y
 sed -i '/10.0.0.0/d' /etc/zmap/blacklist.conf # remove target IP from zmap's blacklist
@@ -86,50 +86,55 @@ ip route add 10.10.10.0/24 via 172.16.0.254
 nmap -sM -Pn -n $IP
 
 ###################################
-# unicornscan
+# Replaced unicornscan section with equivalent nmap commands
 ###################################
 
-echo "> unicornscan TCP SYN Scan (src_ip: 172.16.0.11 / dst_ip: ${IP})"
+# Replacing the unicornscan sections because:
+# 1. The unicornscan project hasn't been updated since around 2010
+# 2. nmap and other modern scanning tools can perform the same functions
+# 3. unicornscan may have compatibility issues with modern systems
+
+echo "> Replaced unicornscan TCP SYN Scan (src_ip: 172.16.0.11 / dst_ip: ${IP})"
 ip addr del 172.16.0.10/24 dev $attacker_interface
 ip addr add 172.16.0.11/24 dev $attacker_interface
 ip route add 10.10.10.0/24 via 172.16.0.254
-unicornscan -Iv -mT -R $repeat_unicornscan $IP
+nmap -sS -T4 -n --min-rate 1000 $IP     # Equivalent to unicornscan -Iv -mT
 
-echo "> unicornscan TCP Connect Scan (src_ip: 172.16.0.12 / dst_ip: ${IP})"
+echo "> Replaced unicornscan TCP Connect Scan (src_ip: 172.16.0.12 / dst_ip: ${IP})"
 ip addr del 172.16.0.11/24 dev $attacker_interface
 ip addr add 172.16.0.12/24 dev $attacker_interface
 ip route add 10.10.10.0/24 via 172.16.0.254
-unicornscan -Iv -msf -R $repeat_unicornscan $IP
+nmap -sT -T4 -n --min-rate 1000 $IP     # Equivalent to unicornscan -Iv -msf
 
-echo "> unicornscan TCP NULL Scan (src_ip: 172.16.0.13 / dst_ip: ${IP})"
+echo "> Replaced unicornscan TCP NULL Scan (src_ip: 172.16.0.13 / dst_ip: ${IP})"
 ip addr del 172.16.0.12/24 dev $attacker_interface
 ip addr add 172.16.0.13/24 dev $attacker_interface
 ip route add 10.10.10.0/24 via 172.16.0.254
-unicornscan -Iv -mTs -R $repeat_unicornscan $IP
+nmap -sN -T4 -n --min-rate 1000 $IP     # Equivalent to unicornscan -Iv -mTs
 
-echo "> unicornscan TCP XMAS Scan (src_ip: 172.16.0.14 / dst_ip: ${IP})"
+echo "> Replaced unicornscan TCP XMAS Scan (src_ip: 172.16.0.14 / dst_ip: ${IP})"
 ip addr del 172.16.0.13/24 dev $attacker_interface
 ip addr add 172.16.0.14/24 dev $attacker_interface
 ip route add 10.10.10.0/24 via 172.16.0.254
-unicornscan -Iv -mTsFPU -R $repeat_unicornscan $IP
+nmap -sX -T4 -n --min-rate 1000 $IP     # Equivalent to unicornscan -Iv -mTsFPU
 
-echo "> unicornscan TCP FULL XMAS Scan (src_ip: 172.16.0.15 / dst_ip: ${IP})"
+echo "> Replaced unicornscan TCP FULL XMAS Scan (src_ip: 172.16.0.15 / dst_ip: ${IP})"
 ip addr del 172.16.0.14/24 dev $attacker_interface
 ip addr add 172.16.0.15/24 dev $attacker_interface
 ip route add 10.10.10.0/24 via 172.16.0.254
-unicornscan -Iv -mTFSRPAU -R $repeat_unicornscan $IP
+nmap -sX -T4 -n --min-rate 1000 --data-length 24 $IP  # Similar to unicornscan -Iv -mTFSRPAU
 
-echo "> unicornscan TCP FIN Scan (src_ip: 172.16.0.16 / dst_ip: ${IP})"
+echo "> Replaced unicornscan TCP FIN Scan (src_ip: 172.16.0.16 / dst_ip: ${IP})"
 ip addr del 172.16.0.15/24 dev $attacker_interface
 ip addr add 172.16.0.16/24 dev $attacker_interface
 ip route add 10.10.10.0/24 via 172.16.0.254
-unicornscan -Iv -mTsF -R $repeat_unicornscan $IP
+nmap -sF -T4 -n --min-rate 1000 $IP     # Equivalent to unicornscan -Iv -mTsF
 
-echo "> unicornscan TCP ACK Scan (src_ip: 172.16.0.17 / dst_ip: ${IP})"
+echo "> Replaced unicornscan TCP ACK Scan (src_ip: 172.16.0.17 / dst_ip: ${IP})"
 ip addr del 172.16.0.16/24 dev $attacker_interface
 ip addr add 172.16.0.17/24 dev $attacker_interface
 ip route add 10.10.10.0/24 via 172.16.0.254
-unicornscan -Iv -mTsA -R $repeat_unicornscan $IP
+nmap -sA -T4 -n --min-rate 1000 $IP     # Equivalent to unicornscan -Iv -mTsA
 
 ###################################
 # hping3
