@@ -26,7 +26,9 @@ IP_masscan="10.10.10.10/24"	# target IP for masscan
 hping_pckt_count="1000"	# required for hping3
 subnet="10.10.10.0/24"	# for zmap and masscan
 attacker_interface="eth1"
-router1_mac="08:00:27:19:30:05"
+# The output of `arp -n | grep eth1 | awk '{print $3}'` on attacker
+# must equal to `cat /sys/class/net/eth2/address` on router1
+router1_mac=$(arp -n | grep eth1 | awk '{print $3}')
 repeat_unicornscan="3" # normally about 300
 
 ###################################
