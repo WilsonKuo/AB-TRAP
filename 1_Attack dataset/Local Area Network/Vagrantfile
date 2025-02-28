@@ -2,6 +2,16 @@
 # vi: set ft=ruby :
 
 Vagrant.configure("2") do |config|
+  system('export VAGRANT_HOME=/mnt/sda1/wilson/VagrantHome')
+  system('VBoxManage setproperty machinefolder /mnt/sda1/wilson/VirtualBox\\ VMs')
+  # https://askubuntu.com/questions/1521832/vagrant-install-process-stuck-at-virtualbox-guest-additions
+  # Fix the follwing hanging problem:
+  #     VirtualBox Guest Additions: NOTE: you may still consider to re-login if some 
+  #     user session specific services (Shared Clipboard, Drag and Drop, Seamless or 
+  #     Guest Screen Resize) were not restarted automatically
+  if Vagrant.has_plugin? "vagrant-vbguest"
+    config.vbguest.no_install  = true
+  end
 
   # a server2 machine (target subnet)
   config.vm.define "server2" do |server2|
@@ -15,7 +25,9 @@ Vagrant.configure("2") do |config|
     server2.vm.provider "virtualbox" do |vb|
       vb.name = "server2"
       vb.gui = false
-      vb.memory = "512"
+      # hardware setting
+      vb.memory = "4096"
+      vb.cpus = 2
     end
   end
 
@@ -31,7 +43,9 @@ Vagrant.configure("2") do |config|
    server1.vm.provider "virtualbox" do |vb|
       vb.name = "server1"
       vb.gui = false
-      vb.memory = "512"
+      # hardware setting
+      vb.memory = "4096"
+      vb.cpus = 2
     end
   end
 
@@ -47,7 +61,9 @@ Vagrant.configure("2") do |config|
     win10.vm.provider "virtualbox" do |vb|
       vb.name = "win10"
       vb.gui = false
-      vb.memory = "1024"
+      # hardware setting
+      vb.memory = "4096"
+      vb.cpus = 2
     end
   end
 
@@ -63,7 +79,15 @@ Vagrant.configure("2") do |config|
     target.vm.provider "virtualbox" do |vb|
       vb.name = "target"
       vb.gui = false
-      vb.memory = "512"
+      # hardware setting
+      vb.memory = "4096"
+      vb.cpus = 2
+      # for improving scan speed
+      # vb.customize ["modifyvm", :id, "--nicspeed1", "1000000"]
+      # vb.customize ["modifyvm", :id, "--nicspeed2", "1000000"]
+      # vb.customize ['modifyvm', :id, '--ioapic', 'on']
+      # vb.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
+      # vb.customize ["modifyvm", :id, "--nictype2", "virtio"]
     end
   end
 
@@ -75,14 +99,30 @@ Vagrant.configure("2") do |config|
     router0.vm.network "private_network", ip: "10.10.10.254/24", virtualbox__intnet: "internal", nic_type: "virtio"
     router0.vm.network "private_network", ip: "10.20.10.254/24", virtualbox__intnet: "routers", nic_type: "virtio"
 
+    router0.ssh.extra_args = ["-o", "PubkeyAcceptedKeyTypes=+ssh-rsa", "-o", "HostKeyAlgorithms=+ssh-rsa"]
+
     router0.vm.provision "shell", run: "always", inline: "ip route add 172.16.0.0/24 via 10.20.10.253"
-    router0.vm.provision "shell", inline: "sysctl -w net.ipv4.ip_forward=1"
+    router0.vm.provision "shell", run: "always", inline: "sysctl -w net.ipv4.ip_forward=1"
     router0.vm.provision "shell", inline: "echo [Router] Configuration done!"
 
     router0.vm.provider "virtualbox" do |vb|
       vb.name = "router0"
       vb.gui = false
-      vb.memory = "512"
+      # hardware setting
+      vb.memory = "4096"
+      vb.cpus = 2
+      # set up NIC
+      vb.customize ['modifyvm', :id, '--nictype1', 'virtio']
+      vb.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
+      vb.customize ['modifyvm', :id, '--nicpromisc3', 'allow-all']
+      # for improving scan speed
+      # vb.customize ['modifyvm', :id, '--nictype2', 'virtio']
+      # vb.customize ['modifyvm', :id, '--nictype3', 'virtio']
+      # vb.customize ["modifyvm", :id, "--nicspeed1", "1000000"]
+      # vb.customize ["modifyvm", :id, "--nicspeed2", "1000000"]
+      # vb.customize ["modifyvm", :id, "--nicspeed3", "1000000"]
+      # vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
+      # vb.customize ['modifyvm', :id, '--ioapic', 'on']
       # https://www.virtualbox.org/wiki/Network_tips
       vb.customize ['modifyvm', :id, '--nictrace2', 'on']
       vb.customize ['modifyvm', :id, '--nictracefile2', 'router0_output.pcap']
@@ -97,14 +137,30 @@ Vagrant.configure("2") do |config|
     router1.vm.network "private_network", ip: "10.20.10.253/24", virtualbox__intnet: "routers", nic_type: "virtio"
     router1.vm.network "private_network", ip: "172.16.0.254/24", virtualbox__intnet: "external", nic_type: "virtio"
 
+    router1.ssh.extra_args = ["-o", "PubkeyAcceptedKeyTypes=+ssh-rsa", "-o", "HostKeyAlgorithms=+ssh-rsa"]
+
     router1.vm.provision "shell", run: "always", inline: "ip route add 10.10.10.0/24 via 10.20.10.254"
-    router1.vm.provision "shell", inline: "sysctl -w net.ipv4.ip_forward=1"
+    router1.vm.provision "shell", run: "always", inline: "sysctl -w net.ipv4.ip_forward=1"
     router1.vm.provision "shell", inline: "echo [Router] Configuration done!"
 
     router1.vm.provider "virtualbox" do |vb|
       vb.name = "router1"
       vb.gui = false
-      vb.memory = "512"
+      # hardware setting
+      vb.memory = "4096"
+      vb.cpus = 2
+      # setup NIC
+      vb.customize ['modifyvm', :id, '--nictype1', 'virtio']
+      vb.customize ['modifyvm', :id, '--nicpromisc2', 'allow-all']
+      vb.customize ['modifyvm', :id, '--nicpromisc3', 'allow-all']
+      # for improving scan speed
+      # vb.customize ['modifyvm', :id, '--nictype2', 'virtio']
+      # vb.customize ['modifyvm', :id, '--nictype3', 'virtio']
+      # vb.customize ["modifyvm", :id, "--nicspeed1", "1000000"]
+      # vb.customize ["modifyvm", :id, "--nicspeed2", "1000000"]
+      # vb.customize ["modifyvm", :id, "--nicspeed3", "1000000"]
+      # vb.customize ['modifyvm', :id, '--natdnshostresolver1', 'on']
+      # vb.customize ['modifyvm', :id, '--ioapic', 'on']
     end
   end
 
@@ -120,7 +176,9 @@ Vagrant.configure("2") do |config|
     zombie.vm.provider "virtualbox" do |vb|
       vb.name = "zombie"
       vb.gui = false
-      vb.memory = "512"
+      # hardware setting
+      vb.memory = "4096"
+      vb.cpus = 2
     end
   end
 
@@ -128,17 +186,24 @@ Vagrant.configure("2") do |config|
   config.vm.define "attacker" do |attacker|
     attacker.vm.box = "kalilinux/rolling" 
     attacker.vm.hostname = "attacker" 
-    attacker.vm.synced_folder ".", "/vagrant", disabled: true
+    attacker.vm.synced_folder ".", "/vagrant", disabled: false
     attacker.vm.network "private_network", ip: "172.16.0.2/24", virtualbox__intnet: "external"
     
     attacker.vm.provision "shell", run: "always", inline: "ip route add 10.10.10.0/24 via 172.16.0.254"
     attacker.vm.provision "shell", run: "always", path: "scripts/attacker_tcpscan.sh"
     attacker.vm.provision "shell", run: "always", path: "scripts/nmap_tcpscan.sh"
+    attacker.vm.provision "shell", run: "always", path: "scripts/hping3_ddos.sh"
 
     config.vm.provider "virtualbox" do |vb|
       vb.gui = false
       vb.name = "attacker" 
-      vb.memory = "1024"
+      # hardware setting
+      vb.memory = "8192"
+      vb.cpus = 4
+      # for improving scan speed
+      # vb.customize ["modifyvm", :id, "--nicspeed1", "1000000"]
+      # vb.customize ["modifyvm", :id, "--nicspeed2", "1000000"]
+      # vb.customize ['modifyvm', :id, '--ioapic', 'on']
     end
   end
 
